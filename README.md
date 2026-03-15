@@ -13,16 +13,32 @@
 - 🌍 **多语言** - 中文、英文，日语自动切换
 - ☁️ **一键部署** - 支持 Zeabur/Railway 免费部署，24/7 在线
 
-## 🚀 快速部署（免费）
+## 🔑 API Key 获取教程
+
+### 1. TELEGRAM_BOT_TOKEN（必须）
+
+1. 打开 Telegram，搜索 **@BotFather**
+2. 发送 `/newbot` 创建新机器人
+3. 按照提示设置名称和用户名
+4. 获取 Token（格式：`123456:ABC-DEF...`）
+
+### 2. GROQ_API_KEY（必须，免费）
+
+1. 访问 [console.groq.com](https://console.groq.com)
+2. 注册/登录账号（新用户自动获得免费额度）
+3. 点击 **API Keys** → 创建新 Key
+4. 复制 Key 即可
+
+## 🚀 快速部署
 
 ### 方式一：Zeabur（推荐）
 
 1. Fork 本项目
 2. 访问 [Zeabur](https://zeabur.com)
-3. 一键部署
-4. 添加环境变量：
-   - `TELEGRAM_BOT_TOKEN` - 从 @BotFather 获取
-   - `GROQ_API_KEY` - 从 [console.groq.com](https://console.groq.com) 获取（免费）
+3. 连接 GitHub，一键部署
+4. 在服务设置中添加环境变量：
+   - `TELEGRAM_BOT_TOKEN` = 你的 Telegram Token
+   - `GROQ_API_KEY` = 你的 Groq API Key
 
 ### 方式二：Railway
 
@@ -60,9 +76,6 @@ npm start
 | `TELEGRAM_BOT_TOKEN` | ✅ | Telegram Bot Token（@BotFather 获取）|
 | `GROQ_API_KEY` | ✅ | Groq API Key（免费，从 console.groq.com 获取）|
 | `GROQ_MODEL` | ❌ | 默认：`llama-3.3-70b-versatile` |
-| `OPENROUTER_API_KEY` | ❌ | 备选 AI 提供商 |
-| `DEEPSEEK_API_KEY` | ❌ | 备选 AI 提供商 |
-| `QWEN_API_KEY` | ❌ | 备选 AI 提供商 |
 
 ## 🤖 可用命令
 
@@ -78,8 +91,6 @@ npm start
 |--------|------|------|
 | **Groq** | Llama 3.3 70B | 🆓 免费 |
 | OpenRouter | Gemma 3 | 🆓 免费 |
-| DeepSeek | V3 | 💰 低价 |
-| Qwen | Turbo | 💰 低价 |
 
 推荐使用 **Groq**，免费且速度极快（1000+ tokens/秒）！
 
@@ -98,14 +109,3 @@ telegram-ai-assistant/
 ├── package.json
 └── Procfile                 # 部署配置
 ```
-
-## 📄 许可证
-
-MIT License
-
-## 🙏 鸣谢
-
-- [Telegram Bot API](https://core.telegram.org/bots/api)
-- [Groq](https://groq.com/) - 免费 AI 推理
-- [OpenRouter](https://openrouter.ai/) - 免费模型聚合
-"# telegram_chatai" 
