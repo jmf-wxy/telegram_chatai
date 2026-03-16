@@ -35,17 +35,12 @@ telegram-ai-assistant/
 └── STARTUP_GUIDE.md              # 本文件
 ```
 
-### 🔑 已配置的API密钥
-- **OpenRouter**: `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`
-- **模型**: `qwen/qwen3-coder:free` (您指定的免费模型)
-
 ### 🌍 免费AI模型获取指南
 
-#### 1. OpenRouter (已配置)
+#### 1. OpenRouter
 您已经配置了OpenRouter的免费Qwen3 Coder模型：
 - 访问: https://openrouter.ai
 - 模型: `qwen/qwen3-coder:free` 
-- 状态: ✅ 已配置并就绪
 
 #### 2. DeepSeek 免费层
 获取免费DeepSeek API访问：
