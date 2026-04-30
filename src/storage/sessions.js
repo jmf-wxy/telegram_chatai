@@ -2,10 +2,26 @@ const fs = require('fs');
 const path = require('path');
 const logger = require('../utils/logger');
 
-const DATA_DIR = process.env.DATA_DIR
-  ? path.resolve(process.env.DATA_DIR)
-  : path.join(__dirname, '../../data');
+function resolveDataDir() {
+  const explicitDir = process.env.DATA_DIR ? path.resolve(process.env.DATA_DIR) : null;
+  if (explicitDir) return explicitDir;
 
+  let dataDir = path.join(__dirname, '../../data');
+
+  try {
+    const stat = fs.statSync(dataDir);
+    if (!stat.isDirectory()) {
+      logger.warn(`SessionManager: "${dataDir}" exists but is not a directory, using fallback`);
+      dataDir = path.join(__dirname, '../../sessions_data');
+    }
+  } catch (_) {
+    // doesn't exist yet, will be created
+  }
+
+  return dataDir;
+}
+
+const DATA_DIR = resolveDataDir();
 const SESSIONS_FILE = path.join(DATA_DIR, 'sessions.json');
 
 class SessionManager {
@@ -53,7 +69,7 @@ class SessionManager {
       }
       fs.writeFileSync(SESSIONS_FILE, JSON.stringify(obj, null, 2), 'utf8');
     } catch (err) {
-      logger.error('SessionManager: failed to save sessions to disk', { error: err.message });
+      logger.error('SessionManager: failed to save sessions to disk', { error: err.message, dir: DATA_DIR });
     }
   }
 
