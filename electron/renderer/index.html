@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Telegram AI Assistant</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <div class="app">
+      <header class="topbar">
+        <div class="brand">
+          <div class="glyph" aria-hidden="true"></div>
+          <div class="brandText">
+            <div class="title" data-i18n="appTitle">Telegram AI Assistant</div>
+            <div class="subtitle" data-i18n="appSubtitle">Embedded runtime • Offline-ready packaging • Live logs</div>
+          </div>
+        </div>
+        <div class="status">
+          <div class="langSwitch" title="Language">
+            <button class="seg" id="langZh" type="button">中</button>
+            <button class="seg" id="langEn" type="button">EN</button>
+          </div>
+          <div class="pill" id="pill">
+            <span class="dot" id="dot"></span>
+            <span id="statusText" data-i18n="statusIdle">Idle</span>
+          </div>
+        </div>
+      </header>
+
+      <main class="grid">
+        <section class="card">
+          <div class="cardHead">
+            <div class="cardTitle" data-i18n="runTitle">Run</div>
+            <div class="cardHint" data-i18n="runHint">Start/Stop controls the embedded bot + server runtime.</div>
+          </div>
+          <div class="actions">
+            <button class="btn primary" id="btnStart" data-i18n="btnStart">Start</button>
+            <button class="btn danger" id="btnStop" disabled data-i18n="btnStop">Stop</button>
+            <button class="btn" id="btnRestart" disabled data-i18n="btnRestart">Restart</button>
+            <button class="btn" id="btnOpenLogs" data-i18n="btnOpenLogs">Open logs folder</button>
+          </div>
+          <div class="kv">
+            <div class="k" data-i18n="kvEnv">Env file</div>
+            <div class="v mono" id="envPath">(app data)</div>
+            <div class="k" data-i18n="kvLogs">Log dir</div>
+            <div class="v mono" id="logDir">(app data)</div>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="cardHead">
+            <div class="cardTitle" data-i18n="settingsTitle">Settings</div>
+            <div class="cardHint" data-i18n="settingsHint">Saved into a bundled .env under your Windows user profile.</div>
+          </div>
+
+          <div class="form">
+            <div class="row">
+              <label>TELEGRAM_BOT_TOKEN</label>
+              <input id="TELEGRAM_BOT_TOKEN" type="password" placeholder="123456:ABC..." />
+              <div class="help" data-i18n="helpBotFather">Get it from @BotFather</div>
+            </div>
+
+            <div class="row cols2">
+              <div>
+                <label>GROQ_API_KEY</label>
+                <input id="GROQ_API_KEY" type="password" placeholder="groq_..." />
+                <div class="help" data-i18n="helpGroq">Fast + often free, recommended default</div>
+              </div>
+              <div>
+                <label>OPENROUTER_API_KEY</label>
+                <input id="OPENROUTER_API_KEY" type="password" placeholder="sk-or-..." />
+                <div class="help" data-i18n="helpOpenRouter">Can use free models like qwen/qwen3-coder:free</div>
+              </div>
+            </div>
+
+            <div class="row cols2">
+              <div>
+                <label>NVIDIA_API_KEY</label>
+                <input id="NVIDIA_API_KEY" type="password" placeholder="nvapi-..." />
+                <div class="help">From build.nvidia.com</div>
+              </div>
+              <div>
+                <label>DEEPSEEK_API_KEY</label>
+                <input id="DEEPSEEK_API_KEY" type="password" placeholder="ds_..." />
+              </div>
+              <div>
+                <label>QWEN_API_KEY</label>
+                <input id="QWEN_API_KEY" type="password" placeholder="qwen_..." />
+              </div>
+            </div>
+
+            <div class="row cols3">
+              <div>
+                <label>DEFAULT_PROVIDER</label>
+                <select id="DEFAULT_PROVIDER">
+                  <option value="groq">groq</option>
+                  <option value="deepseek">deepseek</option>
+                  <option value="qwen">qwen</option>
+                  <option value="openrouter">openrouter</option>
+                  <option value="nvidia">nvidia</option>
+                </select>
+              </div>
+              <div>
+                <label>DEFAULT_MODEL</label>
+                <input id="DEFAULT_MODEL" type="text" class="mono" placeholder="llama-3.3-70b-versatile" />
+              </div>
+              <div>
+                <label>PORT</label>
+                <input id="PORT" type="text" class="mono" placeholder="3000" />
+              </div>
+            </div>
+
+            <div class="row cols2">
+              <div>
+                <label>NODE_ENV</label>
+                <select id="NODE_ENV">
+                  <option value="development">development</option>
+                  <option value="production">production</option>
+                  <option value="test">test</option>
+                </select>
+              </div>
+              <div class="saveRow">
+                <button class="btn primary" id="btnSave" data-i18n="btnSave">Save</button>
+                <div class="saveHint" data-i18n="saveHint">Restart if you changed provider/model/port.</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="card logs">
+          <div class="cardHead">
+            <div class="cardTitle" data-i18n="logsTitle">Logs</div>
+            <div class="cardHint" data-i18n="logsHint">Streaming from combined.log (tail).</div>
+          </div>
+          <div class="logTools">
+            <label class="toggle">
+              <input type="checkbox" id="autoScroll" checked />
+              <span data-i18n="autoScroll">Auto-scroll</span>
+            </label>
+            <button class="btn" id="btnClearLogs" data-i18n="btnClear">Clear</button>
+            <button class="btn" id="btnCopyLogs" data-i18n="btnCopy">Copy</button>
+          </div>
+          <pre class="logbox" id="logbox"></pre>
+        </section>
+      </main>
+    </div>
+
+    <script src="./renderer.js"></script>
+  </body>
+</html>
+

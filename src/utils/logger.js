@@ -1,12 +1,25 @@
 const winston = require('winston');
 const path = require('path');
 
-// Define log directory
-const logDir = path.join(__dirname, '../../logs');
-// Ensure log directory exists
+const logDir = process.env.LOG_DIR
+  ? path.resolve(process.env.LOG_DIR)
+  : path.join(__dirname, '../../logs');
 const fs = require('fs');
 if (!fs.existsSync(logDir)) {
   fs.mkdirSync(logDir, { recursive: true });
+}
+
+const transports = [
+  new winston.transports.File({ filename: path.join(logDir, 'error.log'), level: 'error' }),
+  new winston.transports.File({ filename: path.join(logDir, 'combined.log') })
+];
+
+if (process.env.NODE_ENV !== 'production') {
+  transports.push(new winston.transports.Console({
+    format: winston.format.simple()
+  }));
+} else {
+  transports.push(new winston.transports.Console());
 }
 
 const logger = winston.createLogger({
@@ -15,19 +28,7 @@ const logger = winston.createLogger({
     winston.format.timestamp(),
     winston.format.json()
   ),
-  transports: [
-    new winston.transports.Console(),
-    new winston.transports.File({ filename: path.join(logDir, 'error.log'), level: 'error' }),
-    new winston.transports.File({ filename: path.join(logDir, 'combined.log') })
-  ]
+  transports
 });
-
-// If we're not in production then log to the `console` with the format:
-// `${info.level}: ${info.message} JSON.stringify({ ...rest }) `
-if (process.env.NODE_ENV !== 'production') {
-  logger.add(new winston.transports.Console({
-    format: winston.format.simple()
-  }));
-}
 
 module.exports = logger;

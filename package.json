@@ -2,10 +2,12 @@
   "name": "telegram-ai-assistant",
   "version": "1.0.0",
   "description": "基于 Telegram 的个人 AI 助手，支持 DeepSeek/Qwen 多模型",
-  "main": "src/server.js",
+  "main": "electron/main.js",
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
+    "desktop:dev": "electron .",
+    "desktop:build": "electron-builder --win nsis",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
@@ -24,10 +26,29 @@
     "node-cron": "^3.0.3",
     "node-telegram-bot-api": "^0.64.0",
     "openai": "^4.52.0",
-    "sqlite3": "^5.1.7",
     "winston": "^3.13.0"
   },
   "devDependencies": {
+    "electron": "^32.2.8",
+    "electron-builder": "^24.13.3",
     "nodemon": "^3.1.4"
+  },
+  "build": {
+    "appId": "com.telegram.aiassistant",
+    "productName": "Telegram AI Assistant",
+    "directories": {
+      "output": "dist-electron"
+    },
+    "files": [
+      "src/**/*",
+      "electron/**/*",
+      "package.json"
+    ],
+    "asar": true,
+    "win": {
+      "target": [
+        "nsis"
+      ]
+    }
   }
 }

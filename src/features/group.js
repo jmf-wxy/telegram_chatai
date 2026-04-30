@@ -1,48 +1,54 @@
 const AIChat = require('../ai/index');
+const sessions = require('../storage/sessions');
+const { sendMessageSafe } = require('../bot/index');
+const logger = require('../utils/logger');
 
 class GroupHandler {
   constructor(bot) {
     this.bot = bot;
-    this.setup();
+    this.botInfo = null;
+    this.initBotInfo();
+  }
+
+  async initBotInfo() {
+    try {
+      this.botInfo = await this.bot.getMe();
+    } catch (error) {
+      logger.error('Failed to get bot info:', { error: error.message });
+    }
   }
 
   setup() {
-    // 新成员加入
     this.bot.on('new_chat_members', async (msg) => {
       const chatId = msg.chat.id;
-      const botInfo = await this.bot.getMe();
-      const newMembers = msg.new_chat_members.filter(member => member.id === botInfo.id);
-      
+      if (!this.botInfo) await this.initBotInfo();
+      const newMembers = msg.new_chat_members.filter(member => member.id === this.botInfo.id);
+
       if (newMembers.length > 0) {
-        await this.bot.sendMessage(chatId, 
+        await this.bot.sendMessage(chatId,
           '👋 Thanks for adding me to this group! I\'m here to help answer questions. Use /help to see available commands.'
         );
       }
     });
 
-    // 成员离开
     this.bot.on('left_chat_member', async (msg) => {
       const chatId = msg.chat.id;
       const leftMember = msg.left_chat_member;
-      const botInfo = await this.bot.getMe();
-      
-      if (leftMember.id === botInfo.id) {
-        // Bot was removed from group
-        console.log(`Bot removed from group ${chatId}`);
-        // Optionally clean up any group-specific data
+      if (!this.botInfo) await this.initBotInfo();
+
+      if (leftMember.id === this.botInfo.id) {
+        logger.info(`Bot removed from group ${chatId}`);
       }
     });
 
-    // 监听群组消息（需要 @ 机器人）
     this.bot.on('message', async (msg) => {
       if (msg.chat.type !== 'group' && msg.chat.type !== 'supergroup') return;
-      
+      if (!this.botInfo) await this.initBotInfo();
+
       const text = msg.text || '';
-      const botInfo = await this.bot.getMe();
-      
-      // 检查是否 @ 了机器人
-      if (text.includes(`@${botInfo.username}`)) {
-        const cleanText = text.replace(`@${botInfo.username}`, '').trim();
+
+      if (text.includes(`@${this.botInfo.username}`)) {
+        const cleanText = text.replace(`@${this.botInfo.username}`, '').trim();
         if (cleanText) {
           await this.handleGroupMessage(msg, cleanText);
         }
@@ -53,20 +59,15 @@ class GroupHandler {
   async handleGroupMessage(msg, cleanText) {
     const chatId = msg.chat.id;
     const userId = msg.from.id;
-    
+
     try {
-      // 显示"正在输入"状态
       await this.bot.sendChatAction(chatId, 'typing');
-      
-      // 调用 AI 处理
+
       const response = await AIChat.chat(userId, cleanText);
-      
-      // 发送回复
-      await this.bot.sendMessage(chatId, response, {
-        parse_mode: 'Markdown'
-      });
+
+      await sendMessageSafe(this.bot, chatId, response);
     } catch (error) {
-      console.error('Group message error:', error);
+      logger.error('Group message error:', { error: error.message });
       await this.bot.sendMessage(chatId, '❌ Sorry, I encountered an error processing your request.');
     }
   }

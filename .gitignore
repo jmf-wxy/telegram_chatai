@@ -17,6 +17,7 @@ Thumbs.db
 # Build
 dist/
 build/
+dist-electron/
 
 # IDE
 .vscode/
@@ -28,3 +29,12 @@ build/
 nul
 tmp/
 temp/
+
+# Data (runtime generated)
+data/
+
+# Local settings
+launcher_settings.json
+
+# Claude worktrees
+.claude/

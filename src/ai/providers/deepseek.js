@@ -1,5 +1,7 @@
 const { OpenAI } = require('openai');
 const config = require('../../utils/config');
+const logger = require('../../utils/logger');
+const { SYSTEM_PROMPT } = require('../constants');
 
 class DeepSeekProvider {
   constructor() {
@@ -15,13 +17,8 @@ class DeepSeekProvider {
   }
 
   async chat(messages) {
-    const systemPrompt = `You are a helpful AI assistant. 
-Please respond in the same language as the user.
-Be concise and friendly.`;
-
-    // 添加系统提示
     const fullMessages = [
-      { role: 'system', content: systemPrompt },
+      { role: 'system', content: SYSTEM_PROMPT },
       ...messages
     ];
 
@@ -36,7 +33,7 @@ Be concise and friendly.`;
 
       return response.choices[0].message.content;
     } catch (error) {
-      console.error('DeepSeek API Error:', error);
+      logger.error('DeepSeek API Error:', { message: error.message, status: error.response?.status });
       throw new Error(`AI request failed: ${error.message}`);
     }
   }

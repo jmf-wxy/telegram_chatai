@@ -1,4 +1,7 @@
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({
+  path: process.env.DOTENV_PATH ? path.resolve(process.env.DOTENV_PATH) : undefined
+});
 
 const config = {
   telegram: {
@@ -19,6 +22,15 @@ const config = {
   openrouter: {
     apiKey: process.env.OPENROUTER_API_KEY || '',
     model: process.env.OPENROUTER_MODEL || 'qwen/qwen3-coder:free'
+  },
+  nvidia: {
+    apiKey: process.env.NVIDIA_API_KEY || '',
+    baseURL: process.env.NVIDIA_BASE_URL || 'https://integrate.api.nvidia.com/v1',
+    model: process.env.NVIDIA_MODEL || 'z-ai/glm5'
+  },
+  ai: {
+    defaultProvider: process.env.DEFAULT_PROVIDER || 'groq',
+    defaultModel: process.env.DEFAULT_MODEL || ''
   },
   server: {
     port: process.env.PORT || 3000,

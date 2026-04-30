@@ -1,5 +1,7 @@
 const { OpenAI } = require('openai');
 const config = require('../../utils/config');
+const logger = require('../../utils/logger');
+const { SYSTEM_PROMPT } = require('../constants');
 
 class QwenProvider {
   constructor() {
@@ -15,12 +17,8 @@ class QwenProvider {
   }
 
   async chat(messages) {
-    const systemPrompt = `You are a helpful AI assistant named Qwen. 
-Please respond in the same language as the user.
-Be concise, friendly, and accurate.`;
-
     const fullMessages = [
-      { role: 'system', content: systemPrompt },
+      { role: 'system', content: SYSTEM_PROMPT },
       ...messages
     ];
 
@@ -34,7 +32,7 @@ Be concise, friendly, and accurate.`;
 
       return response.choices[0].message.content;
     } catch (error) {
-      console.error('Qwen API Error:', error);
+      logger.error('Qwen API Error:', { message: error.message, status: error.response?.status });
       throw new Error(`AI request failed: ${error.message}`);
     }
   }

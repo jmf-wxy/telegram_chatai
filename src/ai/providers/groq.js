@@ -1,9 +1,10 @@
 const Groq = require('groq-sdk');
 const config = require('../../utils/config');
+const logger = require('../../utils/logger');
+const { SYSTEM_PROMPT } = require('../constants');
 
 class GroqProvider {
   constructor() {
-    // Groq API is free and very fast!
     this.client = new Groq({
       apiKey: config.groq.apiKey
     });
@@ -15,13 +16,8 @@ class GroqProvider {
   }
 
   async chat(messages) {
-    const systemPrompt = `You are a helpful AI assistant. 
-Please respond in the same language as the user.
-Be concise and friendly.`;
-
-    // Add system prompt
     const fullMessages = [
-      { role: 'system', content: systemPrompt },
+      { role: 'system', content: SYSTEM_PROMPT },
       ...messages
     ];
 
@@ -36,7 +32,7 @@ Be concise and friendly.`;
 
       return response.choices[0].message.content;
     } catch (error) {
-      console.error('Groq API Error:', error);
+      logger.error('Groq API Error:', { message: error.message, status: error.response?.status });
       throw new Error(`AI request failed: ${error.message}`);
     }
   }

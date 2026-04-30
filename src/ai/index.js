@@ -2,7 +2,14 @@ const DeepSeekProvider = require('./providers/deepseek');
 const QwenProvider = require('./providers/qwen');
 const OpenRouterProvider = require('./providers/openrouter');
 const GroqProvider = require('./providers/groq');
-const SessionManager = require('../storage/sessions');
+const NvidiaProvider = require('./providers/nvidia');
+const sessions = require('../storage/sessions');
+const config = require('../utils/config');
+const logger = require('../utils/logger');
+
+const SYSTEM_PROMPT = `You are a helpful AI assistant.
+Please respond in the same language as the user.
+Be concise and friendly.`;
 
 class AIChat {
   constructor() {
@@ -10,93 +17,108 @@ class AIChat {
       deepseek: new DeepSeekProvider(),
       qwen: new QwenProvider(),
       openrouter: new OpenRouterProvider(),
-      groq: new GroqProvider()
+      groq: new GroqProvider(),
+      nvidia: new NvidiaProvider(),
     };
-    this.currentProvider = 'groq';
-    this.currentModel = 'llama-3.3-70b-versatile'; // default to fast free model
-    this.sessions = new SessionManager();
+    this.defaultProvider = (config.ai && config.ai.defaultProvider) ? config.ai.defaultProvider : 'groq';
+    this.defaultModel = (config.ai && config.ai.defaultModel) ? config.ai.defaultModel : '';
+  }
+
+  _getUserProvider(userId) {
+    return sessions.getUserProvider(userId) || this.defaultProvider;
+  }
+
+  _getUserModel(userId) {
+    const model = sessions.getUserModel(userId);
+    if (model) return model;
+    if (this.defaultModel) return this.defaultModel;
+    const providerName = this._getUserProvider(userId);
+    const providerConfig = config[providerName] || {};
+    return providerConfig.model || 'llama-3.3-70b-versatile';
+  }
+
+  _hasApiKey(providerName) {
+    const providerConfig = config[providerName] || {};
+    return !!(providerConfig.apiKey && providerConfig.apiKey.trim() !== '');
   }
 
   async chat(userId, message) {
-    // 获取会话历史
-    const history = await this.sessions.getHistory(userId);
-
-    // 添加用户消息
+    const history = await sessions.getHistory(userId);
     history.push({ role: 'user', content: message });
 
-    // 调用 AI
-    const provider = this.providers[this.currentProvider];
-    // 设置模型名称（如果提供商支持）
-    if (provider.setModel) {
-      provider.setModel(this.currentModel);
-    }
-    
+    const providerName = this._getUserProvider(userId);
+    const modelName = this._getUserModel(userId);
+    const provider = this.providers[providerName];
+
     let response;
     try {
+      if (provider.setModel) provider.setModel(modelName);
       response = await provider.chat(history);
     } catch (error) {
-      console.error(`AI provider ${this.currentProvider} failed:`, error.message);
-      
-      // 如果当前提供商失败，尝试备用提供商
-      const providers = ['groq', 'deepseek', 'qwen', 'openrouter'];
-      const currentIndex = providers.indexOf(this.currentProvider);
-      
-      for (let i = 1; i <= 3; i++) {
-        const altProviderName = providers[(currentIndex + i) % 4];
+      logger.error(`AI provider ${providerName} failed:`, { error: error.message });
+
+      const providers = ['nvidia', 'groq', 'deepseek', 'qwen', 'openrouter'];
+      const currentIndex = providers.indexOf(providerName);
+
+      for (let i = 1; i <= 4; i++) {
+        const altProviderName = providers[(currentIndex + i) % 5];
+        if (!this._hasApiKey(altProviderName)) continue;
         const altProvider = this.providers[altProviderName];
-        console.log(`Trying fallback provider: ${altProviderName}`);
+        logger.info(`Trying fallback provider: ${altProviderName}`);
         try {
+          const altModel = config[altProviderName]?.model || '';
+          if (altModel && altProvider.setModel) altProvider.setModel(altModel);
           response = await altProvider.chat(history);
-          console.log(`Fallback to ${altProviderName} succeeded`);
+          logger.info(`Fallback to ${altProviderName} succeeded`);
           break;
         } catch (altError) {
-          console.error(`Fallback provider ${altProviderName} also failed:`, altError.message);
+          logger.error(`Fallback provider ${altProviderName} also failed:`, { error: altError.message });
         }
       }
-      
+
       if (!response) {
         throw new Error('All AI providers failed. Please check your API keys and try again later.');
       }
     }
 
-    // 保存 AI 回复
     history.push({ role: 'assistant', content: response });
 
-    // 限制历史长度（保留最近 20 条）
     if (history.length > 20) {
       history.splice(0, history.length - 20);
     }
 
-    // 保存更新后的历史
-    await this.sessions.saveHistory(userId, history);
-
+    sessions.saveHistory(userId, history);
     return response;
   }
 
-  switchProvider(providerName) {
+  switchProvider(userId, providerName) {
     if (this.providers[providerName]) {
-      this.currentProvider = providerName;
+      sessions.setUserProvider(userId, providerName);
       return true;
     }
     return false;
   }
 
-  setModel(modelName) {
-    this.currentModel = modelName;
-    // 如果当前提供商支持设置模型，立即应用
-    const provider = this.providers[this.currentProvider];
-    if (provider && typeof provider.setModel === 'function') {
-      provider.setModel(modelName);
-    }
+  setModel(userId, modelName) {
+    sessions.setUserModel(userId, modelName);
     return true;
   }
 
-  getCurrentProvider() {
-    return this.currentProvider;
+  getCurrentProvider(userId) {
+    return this._getUserProvider(userId);
   }
 
-  getCurrentModel() {
-    return this.currentModel;
+  getCurrentModel(userId) {
+    return this._getUserModel(userId);
+  }
+
+  clearHistory(userId) {
+    sessions.clearHistory(userId);
+    return true;
+  }
+
+  getHistory(userId) {
+    return sessions.getHistory(userId);
   }
 }
 
