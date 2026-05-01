@@ -16,6 +16,7 @@ const el = {
   logbox: $('logbox'),
   envPath: $('envPath'),
   logDir: $('logDir'),
+  themeBtns: document.querySelectorAll('.themeBtn'),
 };
 
 const fields = [
@@ -46,7 +47,7 @@ const I18N = {
     kvEnv: '配置文件',
     kvLogs: '日志目录',
     settingsTitle: '设置',
-    settingsHint: '配置会保存到当前用户目录下的 .env（打包后无需 Node/Python）。',
+    settingsHint: '配置会保存到当前用户目录下的 .env。',
     helpBotFather: '从 @BotFather 获取',
     helpGroq: '速度快、常有免费额度，推荐默认',
     helpOpenRouter: '可用免费模型，例如 qwen/qwen3-coder:free',
@@ -147,8 +148,8 @@ async function loadConfig() {
   }
 
   // cosmetic placeholders
-  el.envPath.textContent = 'UserData\\.env';
-  el.logDir.textContent = 'UserData\\logs';
+  el.envPath.textContent = '用户数据目录\\.env';
+  el.logDir.textContent = '用户数据目录\\logs';
 }
 
 async function saveConfig() {
@@ -200,6 +201,41 @@ async function setLang(lang) {
   await refreshStatus();
 }
 
+function setTheme(theme) {
+  const validThemes = ['light', 'dark', 'system'];
+  if (!validThemes.includes(theme)) theme = 'dark';
+
+  let actualTheme = theme;
+  if (theme === 'system') {
+    const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    actualTheme = isDark ? 'dark' : 'light';
+  }
+
+  if (actualTheme === 'light') {
+    document.documentElement.setAttribute('data-theme', 'light');
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+  }
+
+  el.themeBtns.forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.themeValue === theme);
+  });
+
+  localStorage.setItem('theme', theme);
+}
+
+function loadTheme() {
+  const saved = localStorage.getItem('theme');
+  setTheme(saved || 'dark');
+
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+    const current = localStorage.getItem('theme') || 'dark';
+    if (current === 'system') {
+      setTheme('system');
+    }
+  });
+}
+
 el.btnStart.addEventListener('click', start);
 el.btnStop.addEventListener('click', stop);
 el.btnRestart.addEventListener('click', restart);
@@ -218,7 +254,14 @@ el.btnCopyLogs.addEventListener('click', async () => {
 el.langZh.addEventListener('click', () => setLang('zh'));
 el.langEn.addEventListener('click', () => setLang('en'));
 
+el.themeBtns.forEach(btn => {
+  btn.addEventListener('click', () => setTheme(btn.dataset.themeValue));
+});
+
 window.api.onLog((line) => appendLog(line));
 
-loadConfig().then(refreshStatus);
+loadConfig().then(() => {
+  refreshStatus();
+  loadTheme();
+});
 

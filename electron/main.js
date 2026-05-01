@@ -75,6 +75,7 @@ function loadRuntimeModule() {
   ensureEnvExists();
   process.env.DOTENV_PATH = getUserEnvPath();
   process.env.LOG_DIR = getLogDir();
+  process.env.DATA_DIR = path.join(app.getPath('userData'), 'data');
 
   // Now load the existing runtime (bot+server)
   runtime = require('../src/runtime');

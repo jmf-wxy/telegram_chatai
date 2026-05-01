@@ -11,11 +11,20 @@ function resolveDataDir() {
   try {
     const stat = fs.statSync(dataDir);
     if (!stat.isDirectory()) {
-      logger.warn(`SessionManager: "${dataDir}" exists but is not a directory, using fallback`);
+      logger.warn(`SessionManager: "${dataDir}" exists but is not a directory, removing and recreating`);
+      fs.unlinkSync(dataDir);
       dataDir = path.join(__dirname, '../../sessions_data');
     }
-  } catch (_) {
-    // doesn't exist yet, will be created
+  } catch (err) {
+    if (err.code === 'ENOENT') {
+      // doesn't exist yet, will be created
+    } else if (err.code === 'ENOTDIR') {
+      logger.warn(`SessionManager: "${dataDir}" ENOTDIR error, using fallback`);
+      dataDir = path.join(__dirname, '../../sessions_data');
+    } else {
+      logger.error(`SessionManager: unexpected error checking data dir: ${err.message}`);
+      dataDir = path.join(__dirname, '../../sessions_data');
+    }
   }
 
   return dataDir;

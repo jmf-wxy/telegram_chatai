@@ -11,13 +11,24 @@
     <div class="app">
       <header class="topbar">
         <div class="brand">
-          <div class="glyph" aria-hidden="true"></div>
+          <img class="glyph" src="./icon_hd.png" alt="Logo" />
           <div class="brandText">
             <div class="title" data-i18n="appTitle">Telegram AI Assistant</div>
             <div class="subtitle" data-i18n="appSubtitle">Embedded runtime • Offline-ready packaging • Live logs</div>
           </div>
         </div>
-        <div class="status">
+        <div class="topbarControls">
+          <div class="themeSwitch" title="主题">
+            <button class="themeBtn" data-theme-value="light" type="button">
+              <span class="themeIcon sun"></span>浅色
+            </button>
+            <button class="themeBtn" data-theme-value="dark" type="button">
+              <span class="themeIcon moon"></span>深色
+            </button>
+            <button class="themeBtn" data-theme-value="system" type="button">
+              <span class="themeIcon system"></span>跟随系统
+            </button>
+          </div>
           <div class="langSwitch" title="Language">
             <button class="seg" id="langZh" type="button">中</button>
             <button class="seg" id="langEn" type="button">EN</button>
@@ -142,7 +153,7 @@
             <button class="btn" id="btnClearLogs" data-i18n="btnClear">Clear</button>
             <button class="btn" id="btnCopyLogs" data-i18n="btnCopy">Copy</button>
           </div>
-          <pre class="logbox" id="logbox"></pre>
+          <pre class="logbox" id="logbox" data-empty="等待日志输出..."></pre>
         </section>
       </main>
     </div>

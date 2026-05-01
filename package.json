@@ -8,6 +8,9 @@
     "dev": "nodemon src/server.js",
     "desktop:dev": "electron .",
     "desktop:build": "electron-builder --win nsis",
+    "build:win": "electron-builder --win",
+    "build:installer": "npm run build:win",
+    "pack": "electron-builder --dir",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
@@ -36,19 +39,54 @@
   "build": {
     "appId": "com.telegram.aiassistant",
     "productName": "Telegram AI Assistant",
+    "copyright": "Copyright © 2026 Telegram AI Assistant",
+    "icon": "build/icon.ico",
     "directories": {
-      "output": "dist-electron"
+      "output": "dist-electron",
+      "buildResources": "build"
     },
     "files": [
       "src/**/*",
       "electron/**/*",
-      "package.json"
+      "package.json",
+      ".env.example"
     ],
     "asar": true,
+    "extraMetadata": {
+      "main": "electron/main.js"
+    },
     "win": {
       "target": [
-        "nsis"
-      ]
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "artifactName": "${productName}-${version}-Setup.${ext}",
+      "requestedExecutionLevel": "asInvoker"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Telegram AI Assistant",
+      "uninstallDisplayName": "Telegram AI Assistant",
+      "allowElevation": true,
+      "perMachine": false,
+      "deleteAppDataOnUninstall": false,
+      "runAfterFinish": true,
+      "menuCategory": false,
+      "include": "build/installer.nsh"
+    },
+    "portable": {
+      "artifactName": "${productName}-Portable-${version}.${ext}"
+    },
+    "publish": {
+      "provider": "generic",
+      "url": "https://releases.example.com"
     }
   }
 }
