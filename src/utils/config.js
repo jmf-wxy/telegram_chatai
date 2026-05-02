@@ -30,7 +30,9 @@ const config = {
   },
   ai: {
     defaultProvider: process.env.DEFAULT_PROVIDER || 'groq',
-    defaultModel: process.env.DEFAULT_MODEL || ''
+    defaultModel: process.env.DEFAULT_MODEL || '',
+    tone: process.env.AI_TONE || '',
+    userTitle: process.env.AI_USER_TITLE || ''
   },
   server: {
     port: process.env.PORT || 3000,

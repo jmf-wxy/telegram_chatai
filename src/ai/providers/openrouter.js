@@ -7,8 +7,7 @@ class OpenRouterProvider {
     this.client = new OpenAI({
       apiKey: config.openrouter.apiKey,
       baseURL: 'https://openrouter.ai/api/v1',
-      // Optional: Add timeout and retry configurations
-      timeout: 30000, // 30 seconds
+      timeout: 30000,
     });
     this.model = config.openrouter.model || 'qwen/qwen3-coder:free';
   }
@@ -18,21 +17,11 @@ class OpenRouterProvider {
   }
 
   async chat(messages) {
-    const systemPrompt = `You are a helpful AI assistant. 
-Please respond in the same language as the user.
-Be concise and friendly.`;
-
-    // 添加系统提示
-    const fullMessages = [
-      { role: 'system', content: systemPrompt },
-      ...messages
-    ];
-
     try {
       logger.info(`Calling OpenRouter API with model: ${this.model}`);
       const response = await this.client.chat.completions.create({
         model: this.model,
-        messages: fullMessages,
+        messages: messages,
         temperature: 0.7,
         max_tokens: 2048,
         stream: false
@@ -47,7 +36,6 @@ Be concise and friendly.`;
         data: error.response?.data
       });
       
-      // Provide more specific error messages based on status code
       if (error.response) {
         switch (error.response.status) {
           case 401:

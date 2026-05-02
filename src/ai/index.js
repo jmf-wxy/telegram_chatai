@@ -7,9 +7,51 @@ const sessions = require('../storage/sessions');
 const config = require('../utils/config');
 const logger = require('../utils/logger');
 
-const SYSTEM_PROMPT = `You are a helpful AI assistant.
-Please respond in the same language as the user.
-Be concise and friendly.`;
+const TONE_PROMPTS = {
+  formal: 'You must respond in a formal, professional, and academic tone. Use proper grammar and avoid slang.',
+  casual: 'Respond in a relaxed, casual, conversational tone. Be friendly and approachable like chatting with a friend.',
+  humorous: 'Respond with humor and wit. Use jokes, puns, or lighthearted comments when appropriate while still being helpful.',
+  gentle: 'Respond in a gentle, warm, caring tone. Be empathetic, patient, and supportive in your answers.',
+  energetic: 'Respond with energy and enthusiasm! Use exclamation marks (sparingly), be upbeat, and show excitement when helping.',
+  academic: 'Respond as an expert academic. Provide detailed, well-structured answers with citations and technical depth where appropriate.',
+  poetic: 'Respond with artistic flair. Use metaphors, vivid imagery, and elegant language. Make your responses feel like poetry.',
+};
+
+function buildSystemPrompt() {
+  const aiTone = (config.ai && config.ai.tone) || '';
+  const userTitle = (config.ai && config.ai.userTitle) || '';
+
+  let prompt = 'You are a helpful AI assistant.\nPlease respond in the same language as the user.\n';
+
+  if (userTitle) {
+    prompt += `When addressing the user, call them "${userTitle}".\n`;
+  }
+
+  if (aiTone && TONE_PROMPTS[aiTone]) {
+    prompt += TONE_PROMPTS[aiTone] + '\n';
+  }
+
+  prompt += 'Be concise and friendly.';
+  return prompt;
+}
+
+let cachedSystemPrompt = null;
+
+function getSystemPrompt() {
+  const currentTone = (config.ai && config.ai.tone) || '';
+  const currentUserTitle = (config.ai && config.ai.userTitle) || '';
+
+  if (!cachedSystemPrompt) {
+    cachedSystemPrompt = { tone: currentTone, userTitle: currentUserTitle, prompt: buildSystemPrompt() };
+    return cachedSystemPrompt.prompt;
+  }
+
+  if (cachedSystemPrompt.tone !== currentTone || cachedSystemPrompt.userTitle !== currentUserTitle) {
+    cachedSystemPrompt = { tone: currentTone, userTitle: currentUserTitle, prompt: buildSystemPrompt() };
+  }
+
+  return cachedSystemPrompt.prompt;
+}
 
 class AIChat {
   constructor() {
@@ -43,8 +85,14 @@ class AIChat {
   }
 
   async chat(userId, message) {
-    const history = await sessions.getHistory(userId);
-    history.push({ role: 'user', content: message });
+    let history = await sessions.getHistory(userId);
+    
+    const systemPrompt = getSystemPrompt();
+    const messages = [
+      { role: 'system', content: systemPrompt },
+      ...history,
+      { role: 'user', content: message }
+    ];
 
     const providerName = this._getUserProvider(userId);
     const modelName = this._getUserModel(userId);
@@ -53,7 +101,7 @@ class AIChat {
     let response;
     try {
       if (provider.setModel) provider.setModel(modelName);
-      response = await provider.chat(history);
+      response = await provider.chat(messages);
     } catch (error) {
       logger.error(`AI provider ${providerName} failed:`, { error: error.message });
 
@@ -68,7 +116,7 @@ class AIChat {
         try {
           const altModel = config[altProviderName]?.model || '';
           if (altModel && altProvider.setModel) altProvider.setModel(altModel);
-          response = await altProvider.chat(history);
+          response = await altProvider.chat(messages);
           logger.info(`Fallback to ${altProviderName} succeeded`);
           break;
         } catch (altError) {
@@ -81,6 +129,7 @@ class AIChat {
       }
     }
 
+    history.push({ role: 'user', content: message });
     history.push({ role: 'assistant', content: response });
 
     if (history.length > 20) {

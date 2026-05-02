@@ -21,20 +21,11 @@ class NvidiaProvider {
   }
 
   async chat(messages) {
-    const systemPrompt = `You are a helpful AI assistant. 
-Please respond in the same language as the user.
-Be concise and friendly.`;
-
-    const fullMessages = [
-      { role: 'system', content: systemPrompt },
-      ...messages
-    ];
-
     try {
       logger.info(`Calling NVIDIA Integrate API with model: ${this.model}`);
       const response = await this.client.chat.completions.create({
         model: this.model,
-        messages: fullMessages,
+        messages: messages,
         temperature: 0.7,
         max_tokens: 2048,
         stream: false
@@ -74,4 +65,3 @@ Be concise and friendly.`;
 }
 
 module.exports = NvidiaProvider;
-

@@ -14,6 +14,9 @@ logs/
 .DS_Store
 Thumbs.db
 
+# Batch scripts (local use only)
+*.bat
+
 # Build
 dist/
 build/

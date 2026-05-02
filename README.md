@@ -8,10 +8,11 @@
 - 🔥 **多模型支持** - Groq / DeepSeek / Qwen / OpenRouter / NVIDIA，随意切换
 - 🧠 **上下文记忆** - 持久化存储对话历史，重启不丢失
 - ⚡ **Per-User 配置** - 每个用户独立选择 AI 提供商和模型，互不干扰
+- 🎭 **AI 个性设置** - 8 种语气风格（正式/轻松/幽默/温柔/活力/学术/诗意），自定义用户称呼
 - ⏰ **定时任务** - 支持每日/一次性提醒，`/cancel` 可取消
 - 👥 **群组管理** - 支持群组 @机器人 交互
 - 🌍 **多语言** - 中文、英文、日语自动切换
-- 🖥️ **桌面客户端** - Electron 打包的 GUI 应用（Windows）
+- 🖥️ **桌面客户端** - Electron 打包的 GUI 应用（Windows），支持明暗主题切换
 - 🐍 **Python 启动器** - tkinter 图形界面启动器
 - ☁️ **一键部署** - 支持 Zeabur/Railway 部署，24/7 在线
 
@@ -63,7 +64,15 @@ npm run desktop:dev      # 开发模式运行
 npm run desktop:build     # 打包为 exe 安装程序
 ```
 
-打包产物位于 `dist-electron/Telegram AI Assistant Setup 1.0.0.exe`。
+打包产物位于 `dist-electron/Telegram-AI-Assistant-1.0.0-Setup.exe`。
+
+**桌面端特性：**
+- 🎨 三种主题模式：浅色 / 深色 / 跟随系统
+- 🌐 中英双语界面切换
+- 🎭 AI 个性设置：自定义语气风格和用户称呼
+- 📊 实时日志查看与复制
+- 💾 配置自动保存到用户数据目录
+- 📁 一键打开日志文件夹
 
 ### 方式四：Zeabur（推荐云端部署）
 
@@ -103,9 +112,23 @@ railway up
 | `NVIDIA_MODEL` | ❌ | NVIDIA 默认模型 | `z-ai/glm5` |
 | `DEFAULT_PROVIDER` | ❌ | 默认提供商 | `groq` |
 | `DEFAULT_MODEL` | ❌ | 默认模型（覆盖提供商默认）| - |
+| `AI_TONE` | ❌ | AI 语气风格（见下方选项）| - |
+| `AI_USER_TITLE` | ❌ | AI 对用户的称呼 | - |
 | `PORT` | ❌ | HTTP 服务端口 | `3000` |
 
 > *至少配置一个 AI Provider 的 API Key
+
+**AI 语气风格选项 (`AI_TONE`)：**
+
+| 值 | 风格 | 说明 |
+|----|------|------|
+| `formal` | 正式严谨 | 专业学术语调 |
+| `casual` | 轻松随意 | 像朋友聊天一样 |
+| `humorous` | 幽默风趣 | 幽默机智的回复 |
+| `gentle` | 温柔体贴 | 温暖耐心有同理心 |
+| `energetic` | 活力热情 | 充满能量和热情 |
+| `academic` | 学术专业 | 专家级深度回答 |
+| `poetic` | 诗意文艺 | 文学艺术气息 |
 
 ## 🤖 可用命令
 
@@ -114,7 +137,10 @@ railway up
 | `/start` | 启动机器人，显示欢迎信息 |
 | `/help` | 查看帮助信息 |
 | `/model` | 切换 AI 模型（内联按钮选择）|
+| `/new` 或 `/新对话` | 开启全新对话上下文 |
+| `/history` 或 `/历史记录` | 查看最近的聊天记录摘要 |
 | `/clear` | 清除当前用户的聊天历史 |
+| `/tone` | 切换 AI 语气风格 |
 | `/status` | 查看 Bot 状态（当前提供商/模型/活跃用户数）|
 | `/remind HH:MMam/pm 内容` | 设置每日定时提醒 |
 | `/remind HH:MMam/pm once 内容` | 设置一次性提醒 |
@@ -139,7 +165,7 @@ railway up
 telegram-ai-assistant/
 ├── src/
 │   ├── ai/
-│   │   ├── index.js              # AIChat 主模块（per-user 状态管理）
+│   │   ├── index.js              # AIChat 主模块（per-user 状态管理 + 语气风格）
 │   │   ├── constants.js           # 共享常量（System Prompt 等）
 │   │   └── providers/             # AI 提供商实现
 │   │       ├── deepseek.js        # DeepSeek (OpenAI-compatible)
@@ -163,19 +189,20 @@ telegram-ai-assistant/
 │   ├── middleware/
 │   │   └── error.js               # Express 错误中间件
 │   ├── utils/
-│   │   ├── config.js              # 环境变量配置
+│   │   ├── config.js              # 环境变量配置（含 AI_TONE/AI_USER_TITLE）
 │   │   ├── logger.js              # Winston 日志
 │   │   └── telegram.js            # Telegram 工具（sendMessageSafe 等）
 │   ├── server.js                 # Express HTTP 服务入口
 │   └── runtime.js                # 统一运行时入口（Bot + Server）
 ├── electron/                      # Electron 桌面端
-│   ├── main.js                    # 主进程
+│   ├── main.js                    # 主进程（菜单：AI 设置/帮助/关于）
 │   ├── preload.js                 # 预加载脚本
 │   ├── env.js                     # .env 读写工具
 │   └── renderer/                  # 渲染进程
-│       ├── index.html
-│       ├── renderer.js
-│       └── style.css
+│       ├── index.html             # UI 界面（主题切换/多语言/模态框）
+│       ├── renderer.js            # 渲染逻辑（AI 设置/帮助/关于对话框）
+│       ├── style.css              # 样式文件（明暗主题）
+│       └── icon_hd.png            # 应用图标
 ├── launcher.py                    # Python tkinter GUI 启动器
 ├── .env.example                   # 环境变量模板
 ├── Procfile                       # 部署配置（worker 类型）
@@ -200,22 +227,29 @@ npm run desktop:build # 打包 Windows exe 安装程序
 | 用户会话历史 | `data/sessions.json` | JSON 文件 |
 | 运行日志 | `logs/combined.log`, `logs/error.log` | Winston 日志文件 |
 | Electron 配置 | `<userData>/.env` | 环境变量文件 |
+| Electron 偏好 | `<userData>/prefs.json` | JSON 文件（语言/主题/AI 设置）|
 | Python 启动器设置 | `launcher_settings.json` | JSON 文件 |
 
 ## 📝 更新日志
 
-### v1.0.0 (2026-05-01)
+### v1.0.0 (2026-05-03)
 
 - ✅ 全新架构：AIChat per-user 状态，多用户互不干扰
 - ✅ SessionManager 单例 + 文件持久化，重启数据不丢失
 - ✅ 新增 NVIDIA Integrate 提供商支持（GLM5 / MiniMax M2.7）
+- ✨ 新增 **AI 个性设置**：8 种语气风格（正式/轻松/幽默/温柔/活力/学术/诗意）
+- ✨ 新增 **用户称呼自定义**：可设置 AI 对用户的专属称呼
+- ✨ 新增 **主题切换功能**：浅色 / 深色 / 跟随系统三种模式
+- ✨ 新增 `/new`、`/history`、`/tone` 命令
 - ✅ Markdown 解析自动回退机制，特殊字符不再导致发送失败
 - ✅ 新增 `/cancel` 命令取消定时任务
 - ✅ `/remind` 支持一次性提醒（添加 `once` 关键字）
 - ✅ Electron 桌面端完整支持所有 5 个 AI 提供商配置
+- ✅ Electron 桌面端新增「帮助」对话框、「关于」对话框、菜单栏
 - ✅ Fallback 逻辑智能跳过无 API Key 的提供商
 - ✅ 统一日志系统（winston），修复开发模式重复输出问题
 - ✅ System Prompt 提取为共享常量，一处修改全局生效
+- 🎨 UI 优化：响应式布局、模态框动画、更好的视觉体验
 
 ## License
 

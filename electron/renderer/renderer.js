@@ -263,5 +263,52 @@ window.api.onLog((line) => appendLog(line));
 loadConfig().then(() => {
   refreshStatus();
   loadTheme();
+  setupModals();
 });
+
+function setupModals() {
+  const aiTone = $('aiTone');
+  const userTitle = $('userTitle');
+  const aiSettingsModal = $('aiSettingsModal');
+  const helpModal = $('helpModal');
+  const aboutModal = $('aboutModal');
+
+  function openModal(modal) { modal.classList.add('active'); }
+  function closeModal(modal) { modal.classList.remove('active'); }
+
+  window.api.onMenuAiSettings(() => {
+    window.api.loadPrefs().then(prefs => {
+      aiTone.value = prefs.aiTone || '';
+      userTitle.value = prefs.userTitle || '';
+      openModal(aiSettingsModal);
+    });
+  });
+
+  window.api.onMenuHelp(() => openModal(helpModal));
+  window.api.onMenuAbout(() => openModal(aboutModal));
+
+  $('closeAiSettings').addEventListener('click', () => closeModal(aiSettingsModal));
+  $('cancelAiSettings').addEventListener('click', () => closeModal(aiSettingsModal));
+  $('saveAiSettings').addEventListener('click', async () => {
+    await window.api.savePrefs({ aiTone: aiTone.value, userTitle: userTitle.value });
+    appendLog('[ui] AI 个性设置已保存。\n');
+    closeModal(aiSettingsModal);
+  });
+
+  $('closeHelp').addEventListener('click', () => closeModal(helpModal));
+  $('closeHelpBtn').addEventListener('click', () => closeModal(helpModal));
+  $('closeAbout').addEventListener('click', () => closeModal(aboutModal));
+  $('closeAboutBtn').addEventListener('click', () => closeModal(aboutModal));
+
+  $('linkGithub').addEventListener('click', (e) => {
+    e.preventDefault();
+    window.open('https://github.com/jmf-wxy/telegram_chatai', '_blank');
+  });
+
+  [aiSettingsModal, helpModal, aboutModal].forEach(modal => {
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) closeModal(modal);
+    });
+  });
+}
 

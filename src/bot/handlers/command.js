@@ -16,6 +16,8 @@ Commands:
 /help - Help
 /model - Switch AI model
 /clear - Clear chat history
+/new or /新对话 - Start new chat
+/history or /历史记录 - Show chat history
   `.trim();
 
   bot.sendMessage(chatId, welcomeMsg, {
@@ -33,6 +35,8 @@ async function handleHelp(bot, msg) {
 /model - Switch AI model
 /clear - Clear chat history
 /status - Show current status
+/new or /新对话 - Start new chat
+/history or /历史记录 - Show chat history
   `.trim();
 
   bot.sendMessage(chatId, helpMsg, {

@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, shell } = require('electron');
+const { app, BrowserWindow, ipcMain, shell, Menu } = require('electron');
 const path = require('path');
 const fs = require('fs');
 
@@ -154,10 +154,69 @@ function createWindow() {
     mainWindow.on('closed', () => {
       mainWindow = null;
     });
+
+    createMenu();
   } catch (e) {
     writeMainLog(`createWindow failed: ${e && e.stack ? e.stack : String(e)}`);
     throw e;
   }
+}
+
+function createMenu() {
+  const template = [
+    {
+      label: 'File',
+      submenu: [
+        {
+          label: 'AI 个性设置',
+          accelerator: 'CmdOrCtrl+Shift+P',
+          click: () => {
+            if (mainWindow) mainWindow.webContents.send('menu:ai-settings');
+          }
+        },
+        { type: 'separator' },
+        {
+          label: '退出',
+          accelerator: 'CmdOrCtrl+Q',
+          click: () => app.quit()
+        }
+      ]
+    },
+    {
+      label: 'Help',
+      submenu: [
+        {
+          label: '关于 Telegram AI Assistant',
+          click: () => {
+            if (mainWindow) mainWindow.webContents.send('menu:about');
+          }
+        },
+        {
+          label: '使用帮助',
+          accelerator: 'F1',
+          click: () => {
+            if (mainWindow) mainWindow.webContents.send('menu:help');
+          }
+        },
+        { type: 'separator' },
+        {
+          label: 'GitHub 项目地址',
+          click: () => shell.openExternal('https://github.com/jmf-wxy/telegram_chatai')
+        },
+        {
+          label: '查看日志文件夹',
+          click: async () => {
+            const dir = getLogDir();
+            fs.mkdirSync(dir, { recursive: true });
+            await shell.openPath(dir);
+          }
+        }
+      ]
+    }
+  ];
+
+  const menu = Menu.buildFromTemplate(template);
+  Menu.setApplicationMenu(menu);
 }
 
 app.whenReady().then(() => {
@@ -227,6 +286,8 @@ ipcMain.handle('prefs:load', async () => {
   const prefs = readPrefs();
   return {
     lang: prefs.lang || 'zh',
+    aiTone: prefs.aiTone || '',
+    userTitle: prefs.userTitle || '',
   };
 });
 
@@ -237,6 +298,16 @@ ipcMain.handle('prefs:save', async (_e, prefs) => {
     ...prefs,
   };
   writePrefs(next);
+
+  if (prefs.aiTone !== undefined || prefs.userTitle !== undefined) {
+    ensureEnvExists();
+    const envPath = getUserEnvPath();
+    const updates = {};
+    if (prefs.aiTone !== undefined) updates.AI_TONE = prefs.aiTone || '';
+    if (prefs.userTitle !== undefined) updates.AI_USER_TITLE = prefs.userTitle || '';
+    writeEnvMerge(envPath, updates);
+  }
+
   return { ok: true };
 });
 

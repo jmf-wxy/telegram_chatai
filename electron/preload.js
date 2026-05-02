@@ -13,6 +13,14 @@ contextBridge.exposeInMainWorld('api', {
   onLog: (cb) => {
     ipcRenderer.removeAllListeners('logs:line');
     ipcRenderer.on('logs:line', (_e, line) => cb(line));
+  },
+  onMenuAiSettings: (cb) => {
+    ipcRenderer.on('menu:ai-settings', () => cb());
+  },
+  onMenuAbout: (cb) => {
+    ipcRenderer.on('menu:about', () => cb());
+  },
+  onMenuHelp: (cb) => {
+    ipcRenderer.on('menu:help', () => cb());
   }
 });
-

@@ -1,7 +1,6 @@
 const Groq = require('groq-sdk');
 const config = require('../../utils/config');
 const logger = require('../../utils/logger');
-const { SYSTEM_PROMPT } = require('../constants');
 
 class GroqProvider {
   constructor() {
@@ -16,15 +15,10 @@ class GroqProvider {
   }
 
   async chat(messages) {
-    const fullMessages = [
-      { role: 'system', content: SYSTEM_PROMPT },
-      ...messages
-    ];
-
     try {
       const response = await this.client.chat.completions.create({
         model: this.model,
-        messages: fullMessages,
+        messages: messages,
         temperature: 0.7,
         max_tokens: 2048,
         stream: false

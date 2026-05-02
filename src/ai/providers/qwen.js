@@ -1,7 +1,6 @@
 const { OpenAI } = require('openai');
 const config = require('../../utils/config');
 const logger = require('../../utils/logger');
-const { SYSTEM_PROMPT } = require('../constants');
 
 class QwenProvider {
   constructor() {
@@ -17,15 +16,10 @@ class QwenProvider {
   }
 
   async chat(messages) {
-    const fullMessages = [
-      { role: 'system', content: SYSTEM_PROMPT },
-      ...messages
-    ];
-
     try {
       const response = await this.client.chat.completions.create({
         model: this.model,
-        messages: fullMessages,
+        messages: messages,
         temperature: 0.8,
         max_tokens: 2048
       });

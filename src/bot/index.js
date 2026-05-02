@@ -41,6 +41,8 @@ class TelegramBotManager {
     this.bot.onText(/\/remind/, (msg) => this.handleRemind(msg));
     this.bot.onText(/\/tasks/, (msg) => this.handleTasks(msg));
     this.bot.onText(/\/cancel\s+(.+)/, (msg, match) => this.handleCancel(msg, match));
+    this.bot.onText(/\/(new|新对话)/, (msg) => this.handleNewChat(msg));
+    this.bot.onText(/\/(history|history|历史记录)/, (msg) => this.handleShowHistory(msg));
 
     this.bot.on('callback_query', (callbackQuery) => handleCallback(this.bot, callbackQuery));
   }
@@ -150,6 +152,31 @@ class TelegramBotManager {
     } else {
       this.bot.sendMessage(chatId, `❌ Task ${taskId} not found`);
     }
+  }
+
+  handleNewChat(msg) {
+    const chatId = msg.chat.id;
+    const userId = msg.from.id;
+
+    AIChat.clearHistory(userId);
+    this.bot.sendMessage(chatId, '🔄 New chat started. Send a message to begin.');
+  }
+
+  async handleShowHistory(msg) {
+    const chatId = msg.chat.id;
+    const userId = msg.from.id;
+    const history = AIChat.getHistory(userId) || [];
+    const last = history.slice(-10).filter(m => m && typeof m.content === 'string');
+    if (last.length === 0) {
+      this.bot.sendMessage(chatId, '📭 No history yet');
+      return;
+    }
+    const preview = last.map((m) => {
+      const role = m.role === 'assistant' ? '🤖' : '👤';
+      const text = String(m.content || '').replace(/\s+/g, ' ').slice(0, 180);
+      return `${role} ${text}`;
+    }).join('\n\n');
+    await sendMessageSafe(this.bot, chatId, `📖 Recent history (last ${last.length}):\n\n${preview}`);
   }
 
   convertToCron(timeStr) {

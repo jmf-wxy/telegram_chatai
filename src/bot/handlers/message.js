@@ -16,14 +16,7 @@ async function handleMessage(bot, msg) {
 
     const response = await AIChat.chat(userId, text);
 
-    await sendMessageSafe(bot, chatId, response, {
-      reply_markup: {
-        inline_keyboard: [
-          [{ text: t(lang, 'newChat', {}), callback_data: 'new_chat' }],
-          [{ text: t(lang, 'history', {}), callback_data: 'show_history' }]
-        ]
-      }
-    });
+    await sendMessageSafe(bot, chatId, response);
   } catch (error) {
     const logger = require('../../utils/logger');
     logger.error('AI chat error:', { error: error.message });
